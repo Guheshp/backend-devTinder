@@ -5,29 +5,23 @@ const User = require("./model/user")
 const app = express()
 const PORT = 3971
 
+app.use(express.json())
+
 
 app.post("/signup", async (req, res) => {
 
     try {
-
-
-        const userData = new User({
-            firstName: "John",
-            lastName: "Doe",
-            emailId: "john.doe@example.com",
-            password: "securePassword123",
-            age: "28",
-            gender: "male"
-        });
+        const userData = new User(req.body);
 
         await userData.save();
         res.status(201).json({
             success: true,
-            message: "User created successfully!"
+            message: "User created successfully!",
+            data: userData
         });
     } catch (error) {
-        console.error(error); // Log the error
-        res.status(500).json({ // Send a response back on error
+        console.error(error);
+        res.status(500).json({
             success: false,
             message: "Internal server error"
         });
