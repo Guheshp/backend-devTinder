@@ -1,32 +1,22 @@
 const express = require("express")
 require("./config/database")
 const { connectDB } = require("./config/database")
-const User = require("./model/user")
 const app = express()
 const PORT = 3971
 
+
+const cookieparser = require("cookie-parser")
 app.use(express.json())
+app.use(cookieparser())
 
 
-app.post("/signup", async (req, res) => {
+const authRouter = require("./router/auth.router")
+const profileRouter = require("./router/profile.router")
+const requestRouter = require("./router/request.router")
 
-    try {
-        const userData = new User(req.body);
-
-        await userData.save();
-        res.status(201).json({
-            success: true,
-            message: "User created successfully!",
-            data: userData
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: "Internal server error"
-        });
-    }
-});
+app.use("/", authRouter)
+app.use("/", profileRouter)
+app.use("/", requestRouter)
 
 
 connectDB()
