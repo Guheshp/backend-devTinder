@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const { ConnectionRequestModel } = require("../model/connectionRequest")
+const ConnectionRequestModel = require("../model/connectionRequest")
 const User = require("../model/user")
 
 const { userAuth } = require("../middleware/authmiddleware")
@@ -62,12 +62,10 @@ router.post(
     }
 )
 
-
 router.post(
     "/request/review/:status/:requestId",
     userAuth,
     async (req, res) => {
-
         try {
             const loggedInUser = req.user
             const { status, requestId } = req.params;
