@@ -11,7 +11,7 @@ router.get("/user/request/received", userAuth, async (req, res) => {
         const connectionRequest = await ConnectionRequestModel.find({
             toUserId: loggedInUser._id,
             status: "intrested"
-        }).populate("fromUserId", ["firstName", "lastName"])
+        }).populate("fromUserId", ["firstName", "lastName", "photo", "age", "gender", "skills"])
 
         res.status(200).json({
             message: "Data fetched successfully!",
@@ -36,8 +36,8 @@ router.get("/user/connections", userAuth, async (req, res) => {
                 { fromUserId: loggedInUser._id, status: "accepeted" }
             ]
         })
-            .populate("fromUserId", ["firstName", "lastName", "photoUrl", "age", "gender", "skills"])
-            .populate("toUserId", ["firstName", "lastName", "photoUrl", "age", "gender", "skills"])
+            .populate("fromUserId", ["firstName", "lastName", "photo", "age", "gender", "skills"])
+            .populate("toUserId", ["firstName", "lastName", "photo", "age", "gender", "skills"])
 
 
         const data = connectionRequest.map((row) => {
@@ -89,12 +89,13 @@ router.get('/page/feed', userAuth, async (req, res) => {
 
         // console.log("Connection Requests:", connectionRequest);
         // console.log("Users to hide from feed:", Array.from(hideUserFromFeed));
+
         const users = await User.find({
             $and: [
                 { _id: { $nin: Array.from(hideUserFromFeed) } },
                 { _id: { $ne: loggedInUser._id } },
             ]
-        }).select(["firstName", "lastName", "photoUrl", "age", "gender", "skills"])
+        }).select(["firstName", "lastName", "photo", "age", "gender", "skills"])
             .skip(skip)
             .limit(limit)
 

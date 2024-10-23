@@ -45,6 +45,7 @@ const userSchema = new mongoose.Schema({
     },
     photo: {
         type: String,
+        default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYCZ0qae7TaC6iuCJf6WzgV97HR0rMLm8N5A&s",
         validate(value) {
             if (!validator.isURL(value)) {
                 throw new Error("Invalid photo URL: " + value)

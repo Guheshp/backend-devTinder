@@ -29,14 +29,17 @@ router.post("/signup", async (req, res) => {
             photo,
             skills
         });
+
         await userData.save();
+        const token = await generateAccessToken(userData)
+        res.cookie("token", token, { httpOnly: true })
+
         res.status(201).json({
             success: true,
             message: "User created successfully!",
             data: userData
         });
     } catch (error) {
-        // console.error(error);
         res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -52,8 +55,8 @@ const generateAccessToken = async (user) => {
         lastname: user.lastName,
         email: user.emailId,
     };
-    // console.log("playload", payload)
     const token = jwt.sign(payload, "BNIVoltas@215", { expiresIn: "1d" });
+    // console.log("playload", payload)
     return token;
 }
 
@@ -79,7 +82,9 @@ router.post("/login", async (req, res) => {
             res.status(200).json({
                 success: true,
                 message: "Login successfully!",
-                token: token
+                token: token,
+                data: user
+
             })
         } else {
             throw new Error("Invalid credentials!")
@@ -87,7 +92,7 @@ router.post("/login", async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "Internal server error" + error.message,
+            message: "ERROR: " + error.message,
         });
     }
 })

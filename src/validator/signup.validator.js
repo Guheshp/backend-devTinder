@@ -1,19 +1,18 @@
 const validator = require("validator")
 
 const validateSignUpData = (req) => {
-    const { firstName, lastName, emailId, password, age, gender, photo, skills } = req.body;
+    const { firstName, lastName, emailId, password, age, gender, photo, skills } = req.body
 
     if (!firstName) {
     } else if (typeof firstName !== "string") {
         throw new Error("First name is required.");
-        throw new Error("First name must be a string.");
     } else if (firstName.length < 4) {
         throw new Error("First name must be at least 4 characters long.");
     } else if (firstName.length > 50) {
         throw new Error("First name must be no longer than 50 characters.");
     }
 
-    if (lastName) {
+    if (!lastName) {
         if (typeof lastName !== "string") {
             throw new Error("Last name must be a string.");
         }

@@ -5,7 +5,6 @@ const User = require("../model/user")
 
 const { userAuth } = require("../middleware/authmiddleware")
 
-
 router.post(
     "/request/send/:status/:toUserId",
     userAuth,
@@ -104,6 +103,4 @@ router.post(
         }
     }
 )
-
-
 module.exports = router

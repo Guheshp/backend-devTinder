@@ -15,7 +15,7 @@ router.get("/profile/view", userAuth, async (req, res) => {
 
 })
 
-router.patch("/profile/edit", userAuth, async (req, res) => {
+router.post("/profile/edit", userAuth, async (req, res) => {
     try {
         if (!validateEditProfileData(req)) {
             throw new Error("Invalid edit request ")

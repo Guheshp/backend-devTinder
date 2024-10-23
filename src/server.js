@@ -3,9 +3,18 @@ require("./config/database")
 const { connectDB } = require("./config/database")
 const app = express()
 const PORT = 3971
-
-
+const cors = require('cors')
 const cookieparser = require("cookie-parser")
+
+app.use(
+    cors({
+        origin: 'http://localhost:5173',
+        methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
+        // allowedHeaders: ['Content-Type', 'Authorization'],
+        credentials: true,
+        optionsSuccessStatus: 200
+    })
+);
 app.use(express.json())
 app.use(cookieparser())
 
