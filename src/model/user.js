@@ -1,65 +1,147 @@
 const mongoose = require("mongoose")
-const validator = require("validator");
+const validator = require("validator")
 
-const userSchema = new mongoose.Schema({
-    firstName: {
-        type: String,
-        required: true,
-        minLength: 4,
-        maxLength: 50
-    },
-    lastName: {
-        type: String
-    },
-    emailId: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true,
-        validate(value) {
-            if (!validator.isEmail(value)) {
-                throw new Error("Invalid email address: " + value)
-            }
-        }
-    },
-    password: {
-        type: String,
-        required: true,
-        validate(value) {
-            if (!validator.isStrongPassword(value)) {
-                throw new Error("Enter Strong Password!")
-            }
-        }
-    },
-    age: {
-        type: Number
-    },
-    gender: {
-        type: String,
-        validate(value) {
-            if (!["male", "female", "others"].includes(value)) {
-                throw new Error("Gender data not valid!")
-            }
-        }
-    },
-    photo: {
-        type: String,
-        default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYCZ0qae7TaC6iuCJf6WzgV97HR0rMLm8N5A&s",
-        validate(value) {
-            if (!validator.isURL(value)) {
-                throw new Error("Invalid photo URL: " + value)
-            }
-        }
-    },
-    skills: {
-        type: [String],
-    }
-}, { timestamps: true })
+const userSchema = new mongoose.Schema(
+    {
+        /* ---------- Basic Info ---------- */
+        firstName: {
+            type: String,
+            required: true,
+            trim: true,
+            minlength: 2,
+            maxlength: 50
+        },
 
+        lastName: {
+            type: String,
+            trim: true,
+            maxlength: 50
+        },
+
+        emailId: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true,
+            validate: {
+                validator: validator.isEmail,
+                message: "Invalid email address"
+            }
+        },
+
+        password: {
+            type: String,
+            required: true,
+            validate: {
+                validator: validator.isStrongPassword,
+                message: "Enter a strong password"
+            }
+        },
+
+        /* ---------- Auth & Security ---------- */
+        emailVerified: {
+            type: Boolean,
+            default: false
+        },
+
+        lastLoginAt: {
+            type: Date
+        },
+
+        loginAttempts: {
+            type: Number,
+            default: 0
+        },
+
+        lockUntil: {
+            type: Date
+        },
+
+        /* ---------- Profile ---------- */
+        age: {
+            type: Number,
+            min: 18,
+            max: 60
+        },
+
+        gender: {
+            type: String,
+            enum: ["male", "female", "others"]
+        },
+
+        bio: {
+            type: String,
+            maxlength: 3000
+        },
+
+        experienceLevel: {
+            type: String,
+            enum: ["fresher", "junior", "mid", "senior"],
+            default: "fresher"
+        },
+
+        location: {
+            state: { type: String, required: false },
+            country: { type: String, default: "India" }
+        },
+
+        photo: {
+            type: String,
+            default:
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYCZ0qae7TaC6iuCJf6WzgV97HR0rMLm8N5A&s",
+            validate: {
+                validator: validator.isURL,
+                message: "Invalid photo URL"
+            }
+        },
+
+        /* ---------- Skills ---------- */
+        skills: {
+            type: [String],
+            validate: {
+                validator: (value) => value.length <= 10,
+                message: "Maximum 10 skills allowed"
+            }
+        },
+
+        /* ---------- App Control ---------- */
+        profileCompletion: {
+            type: Number,
+            default: 0,
+            min: 0,
+            max: 100
+        },
+
+        isProfileComplete: {
+            type: Boolean,
+            default: false
+        },
+
+        isBlocked: {
+            type: Boolean,
+            default: false
+        },
+
+        /* ---------- Status (Soft Delete) ---------- */
+        status: {
+            type: Number,
+            enum: [1, -1],
+            default: 1,
+            index: true
+        }
+    },
+    { timestamps: true }
+)
+
+/* ---------- Indexes ---------- */
 userSchema.index({ firstName: 1, lastName: 1 })
 userSchema.index({ gender: 1 })
+userSchema.index({ skills: 1 })
+userSchema.index({ status: 1 })
+userSchema.index({ "location.city": 1 })
 
+/* ---------- Model ---------- */
 const User = mongoose.model("User", userSchema)
 
 module.exports = User

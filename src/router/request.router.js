@@ -103,4 +103,39 @@ router.post(
         }
     }
 )
+
+
+router.get('/user/is-connected/:targetUserId', userAuth, async (req, res) => {
+    try {
+        const loggedInUserId = req.user._id
+        const { targetUserId } = req.params
+
+        const connection = await ConnectionRequestModel.findOne({
+            $or: [
+                {
+                    fromUserId: loggedInUserId,
+                    toUserId: targetUserId,
+                    status: 'accepeted'
+                },
+                {
+                    fromUserId: targetUserId,
+                    toUserId: loggedInUserId,
+                    status: 'accepeted'
+                }
+            ]
+        })
+
+        res.json({
+            success: true,
+            isConnected: !!connection
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+})
+
 module.exports = router

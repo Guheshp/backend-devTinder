@@ -60,11 +60,41 @@ const validateSignUpData = (req) => {
 };
 
 const validateEditProfileData = (req) => {
-    const ALLOWED_UPDATES = ["firstName", "lastName", "age", "gender", "skills", "photo"]
+    const allowedFields = [
+        "firstName",
+        "lastName",
+        "age",
+        "gender",
+        "photo",
+        "bio",
+        "experienceLevel",
+        "skills",
+        "location"
+    ]
 
-    const isEditAllowedData = Object.keys(req.body).every((field) => ALLOWED_UPDATES.includes(field))
+    const requestFields = Object.keys(req.body)
 
-    return isEditAllowedData;
+    // ❌ reject unknown fields
+    const isValid = requestFields.every(field =>
+        allowedFields.includes(field)
+    )
+
+    if (!isValid) {
+        console.error("Invalid fields:", requestFields)
+    }
+
+    // 🔍 extra validation for nested location
+    if (req.body.location) {
+        if (
+            typeof req.body.location !== "object" ||
+            !req.body.location.state ||
+            !req.body.location.country
+        ) {
+            return false
+        }
+    }
+
+    return true
 }
 
 module.exports = {

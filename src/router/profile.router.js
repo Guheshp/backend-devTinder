@@ -3,6 +3,7 @@ const router = express.Router()
 const User = require("../model/user")
 const { userAuth } = require("../middleware/authmiddleware")
 const { validateEditProfileData } = require("../validator/signup.validator")
+const calculateProfileStrength = require("../utils/profileStrength")
 
 
 router.get("/profile/view", userAuth, async (req, res) => {
@@ -18,23 +19,73 @@ router.get("/profile/view", userAuth, async (req, res) => {
 router.post("/profile/edit", userAuth, async (req, res) => {
     try {
         if (!validateEditProfileData(req)) {
-            throw new Error("Invalid edit request ")
+            return res.status(400).json({
+                success: false,
+                message: "Invalid edit request"
+            })
         }
-        const loggedInUser = req.user;
 
-        Object.keys(req.body).forEach((key) => loggedInUser[key] = req.body[key])
-        await loggedInUser.save();
+        const loggedInUser = req.user
+
+        /* ---------- Simple fields ---------- */
+        const simpleFields = [
+            "firstName",
+            "lastName",
+            "age",
+            "gender",
+            "photo",
+            "bio",
+            "experienceLevel",
+            "skills"
+        ]
+
+        simpleFields.forEach((field) => {
+            if (req.body[field] !== undefined) {
+                loggedInUser[field] = req.body[field]
+            }
+        })
+
+        loggedInUser.location = {
+            state: req.body.location.state,
+            country: req.body.location.country || "India"
+        }
+
+        // ✅ HANDLE PHOTO REMOVAL
+        if (req.body.photo === null) {
+            loggedInUser.photo = undefined // resets to default avatar
+        }
+
+        /* ---------- NESTED location (IMPORTANT FIX) ---------- */
+        if (req.body.location) {
+            loggedInUser.location = {
+                state: req.body.location.state || loggedInUser.location?.state || '',
+                country: req.body.location.country || 'India'
+            }
+        }
+
+        const result = calculateProfileStrength(loggedInUser)
+
+        loggedInUser.profileCompletion = result.score
+        loggedInUser.isProfileComplete = result.isComplete
+
+        await loggedInUser.save()
+
+        const userResponse = loggedInUser.toObject()
+        delete userResponse.password
+        delete userResponse.loginAttempts
+        delete userResponse.lockUntil
 
         res.status(200).json({
             success: true,
-            message: "edited successfully!",
-            data: loggedInUser
+            message: "Profile updated successfully",
+            data: userResponse
         })
     } catch (error) {
+        console.error("Profile edit error:", error)
         res.status(500).json({
             success: false,
-            message: "error while editing user",
-            error: "ERROR:" + error.message
+            message: "Error while editing profile",
+            error: error.message
         })
     }
 })

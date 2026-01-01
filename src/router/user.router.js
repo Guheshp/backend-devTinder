@@ -1,114 +1,160 @@
 const express = require("express")
-const { userAuth } = require("../middleware/authmiddleware")
 const router = express.Router()
+const { userAuth } = require("../middleware/authmiddleware")
 const ConnectionRequestModel = require("../model/connectionRequest")
 const User = require("../model/user")
+const mongoose = require("mongoose")
 
-router.get("/user/request/received", userAuth, async (req, res) => {
+/* =====================================================
+   REQUESTS RECEIVED
+===================================================== */
+router.get("/request/received", userAuth, async (req, res) => {
     try {
-        const loggedInUser = req.user
-
-        const connectionRequest = await ConnectionRequestModel.find({
-            toUserId: loggedInUser._id,
+        const connectionRequests = await ConnectionRequestModel.find({
+            toUserId: req.user._id,
             status: "intrested"
-        }).populate("fromUserId", ["firstName", "lastName", "photo", "age", "gender", "skills"])
+        }).populate("fromUserId", [
+            "firstName",
+            "lastName",
+            "photo",
+            "age",
+            "gender",
+            "skills"
+        ])
 
-        res.status(200).json({
-            message: "Data fetched successfully!",
-            message: connectionRequest
-        })
-
-
+        res.json({ success: true, data: connectionRequests })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: "ERROR " + error.message
-        })
+        res.status(500).json({ success: false, message: error.message })
     }
 })
 
-router.get("/user/connections", userAuth, async (req, res) => {
+/* =====================================================
+   CONNECTIONS
+===================================================== */
+router.get("/connections", userAuth, async (req, res) => {
     try {
-        const loggedInUser = req.user
-        const connectionRequest = await ConnectionRequestModel.find({
+        const connectionRequests = await ConnectionRequestModel.find({
+            status: "accepeted",
             $or: [
-                { toUserId: loggedInUser._id, status: "accepeted" },
-                { fromUserId: loggedInUser._id, status: "accepeted" }
+                { fromUserId: req.user._id },
+                { toUserId: req.user._id }
             ]
         })
-            .populate("fromUserId", ["firstName", "lastName", "photo", "age", "gender", "skills"])
-            .populate("toUserId", ["firstName", "lastName", "photo", "age", "gender", "skills"])
+            .populate("fromUserId", "firstName lastName photo skills experienceLevel location")
+            .populate("toUserId", "firstName lastName photo skills experienceLevel location")
 
+        const data = connectionRequests.map(r =>
+            r.fromUserId._id.toString() === req.user._id.toString()
+                ? r.toUserId
+                : r.fromUserId
+        )
 
-        const data = connectionRequest.map((row) => {
-            if (row.fromUserId._id.toString() === loggedInUser._id.toString()) {
-                return row.toUserId;
-            }
-            return row.fromUserId
-        })
-
-        res.status(200).json({
-            message: "Data fetched successfully!",
-            message: data
-        })
-
-
+        res.json({ success: true, data })
     } catch (error) {
-        res.status(400).json({
-            success: false,
-            message: "ERROR " + error.message
-        })
+        res.status(500).json({ success: false, message: error.message })
     }
 })
 
-router.get('/page/feed', userAuth, async (req, res) => {
-
-    // console.log(ConnectionRequestModel)
+/* =====================================================
+   FEED
+===================================================== */
+router.get("/feed", userAuth, async (req, res) => {
     try {
-        const loggedInUser = req.user
-
-        const page = parseInt(req.query.page) || 1;
-        let limit = parseInt(req.query.limit) || 10;
-        limit = limit > 50 ? 50 : limit
-
+        const page = Math.max(parseInt(req.query.page) || 1, 1)
+        const limit = Math.min(parseInt(req.query.limit) || 10, 50)
         const skip = (page - 1) * limit
 
-        if (!loggedInUser) {
-            return res.status(401).json({ message: 'Unauthorized: User not found in request' });
-        }
+        const loggedInUserId = req.user._id.toString()
 
-        const connectionRequest = await ConnectionRequestModel.find({
-            $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }]
-        }).select("fromUserId toUserId");
+        const interactions = await ConnectionRequestModel.find({
+            $or: [
+                { fromUserId: req.user._id },
+                { toUserId: req.user._id }
+            ]
+        }).select("fromUserId toUserId")
 
-        const hideUserFromFeed = new Set();
-        connectionRequest.forEach(req => {
-            hideUserFromFeed.add(req.fromUserId.toString());
-            hideUserFromFeed.add(req.toUserId.toString());
-        });
+        // ✅ NORMALIZE TO STRING
+        const hiddenIds = interactions.flatMap(r => [
+            r.fromUserId.toString(),
+            r.toUserId.toString()
+        ])
 
-        // console.log("Connection Requests:", connectionRequest);
-        // console.log("Users to hide from feed:", Array.from(hideUserFromFeed));
+        // ✅ ALWAYS ADD SELF ID
+        hiddenIds.push(loggedInUserId)
 
         const users = await User.find({
-            $and: [
-                { _id: { $nin: Array.from(hideUserFromFeed) } },
-                { _id: { $ne: loggedInUser._id } },
-            ]
-        }).select(["firstName", "lastName", "photo", "age", "gender", "skills"])
+            _id: { $nin: hiddenIds },
+            status: 1,
+            isBlocked: false
+        })
+            .select("firstName lastName age gender experienceLevel bio skills photo location")
             .skip(skip)
             .limit(limit)
 
-        // console.log("Users fetched from DB:", users);
+        console.log("LOGGED IN USER:", loggedInUserId)
+        console.log("HIDDEN IDS:", hiddenIds)
+        console.log("FEED USER IDS:", users.map(u => u._id.toString()))
 
-        res.status(200).json({
-            data: users
-        });
+        res.json({ success: true, data: users })
     } catch (error) {
-        res.status(400).json({
-            message: "ERROR " + error.message
+        res.status(500).json({
+            success: false,
+            message: error.message
         })
     }
+})
+
+
+/* =====================================================
+   SUGGESTED SKILLS  ✅
+===================================================== */
+router.get("/suggested-skills", userAuth, async (req, res) => {
+    try {
+        const popularSkills = [
+            "react",
+            "node_js",
+            "mongodb",
+            "typescript",
+            "docker",
+            "aws",
+            "system_design"
+        ]
+
+        const suggestions = popularSkills.filter(
+            skill => !req.user.skills?.includes(skill)
+        )
+
+        res.json({ success: true, data: suggestions.slice(0, 5) })
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message })
+    }
+})
+
+/* =====================================================
+   USER BY ID (LAST)
+===================================================== */
+router.get("/:id", userAuth, async (req, res) => {
+    const { id } = req.params
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid user id"
+        })
+    }
+
+    const user = await User.findById(id).select(
+        "firstName lastName photo skills experienceLevel location"
+    )
+
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "User not found"
+        })
+    }
+
+    res.json({ success: true, data: user })
 })
 
 module.exports = router
