@@ -4,6 +4,37 @@ const { userAuth } = require('../middleware/authmiddleware')
 const { Chat } = require('../model/chat')
 const ConnectionRequestModel = require('../model/connectionRequest')
 
+
+
+
+router.get('/chat/unread-count', userAuth, async (req, res) => {
+    try {
+        const userId = req.user._id
+
+        const chats = await Chat.find({
+            participants: userId,
+            'messages.seen': false
+        }).select('messages participants')
+
+        let unreadCount = 0
+
+        chats.forEach(chat => {
+            chat.messages.forEach(msg => {
+                if (
+                    !msg.seen &&
+                    msg.senderId.toString() !== userId.toString()
+                ) {
+                    unreadCount++
+                }
+            })
+        })
+
+        res.json({ success: true, data: unreadCount })
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message })
+    }
+})
+
 /* =====================================================
    CHAT LIST (STATIC — MUST BE FIRST)
 ===================================================== */
@@ -14,39 +45,45 @@ router.get('/chat/list', userAuth, async (req, res) => {
         const chats = await Chat.find({
             participants: userId
         })
+            .sort({ lastMessageAt: -1 })
             .populate('participants', 'firstName lastName photo')
             .lean()
 
-        const result = chats
-            .map(chat => {
-                const otherUser = chat.participants.find(
-                    u => u._id.toString() !== userId.toString()
-                )
-
-                const lastMsg =
-                    chat.messages?.length > 0
-                        ? chat.messages[chat.messages.length - 1]
-                        : null
-
-                return {
-                    chatId: chat._id,
-                    user: otherUser,
-                    lastMessage: lastMsg?.text || '',
-                    lastMessageAt: lastMsg?.createdAt || chat.updatedAt
-                }
-            })
-            .sort(
-                (a, b) =>
-                    new Date(b.lastMessageAt) -
-                    new Date(a.lastMessageAt)
+        const result = chats.map(chat => {
+            const otherUser = chat.participants.find(
+                u => u._id.toString() !== userId.toString()
             )
 
-        res.json({ success: true, data: result })
+            // ✅ COUNT UNREAD MESSAGES
+            const unreadCount = chat.messages.filter(
+                msg =>
+                    msg.senderId.toString() !== userId.toString() &&
+                    msg.seen === false
+            ).length
+
+            const lastMessage = chat.messages.at(-1)
+
+            return {
+                chatId: chat._id,
+                user: otherUser,
+                lastMessage: lastMessage?.text || '',
+                lastMessageAt: chat.lastMessageAt,
+                unreadCount // 🔥 ADD THIS
+            }
+        })
+
+        res.json({
+            success: true,
+            data: result
+        })
     } catch (error) {
-        console.error('Chat list error:', error)
-        res.status(500).json({ success: false, message: error.message })
+        res.status(500).json({
+            success: false,
+            message: error.message
+        })
     }
 })
+
 
 /* =====================================================
    CHAT BY USER ID (DYNAMIC — MUST BE LAST)
@@ -85,7 +122,8 @@ router.get('/chat/:targetUserId', userAuth, async (req, res) => {
     // mark seen
     chat.messages.forEach(msg => {
         if (
-            msg.senderId._id.toString() !== userId.toString()
+            msg.senderId._id.toString() !== userId.toString() &&
+            msg.seen === false
         ) {
             msg.seen = true
         }
@@ -94,5 +132,8 @@ router.get('/chat/:targetUserId', userAuth, async (req, res) => {
 
     res.json({ success: true, chat })
 })
+
+
+
 
 module.exports = router
