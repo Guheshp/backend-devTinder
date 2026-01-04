@@ -2,7 +2,7 @@ const express = require("express")
 require("./config/database")
 const { connectDB } = require("./config/database")
 const app = express()
-const PORT = 7777
+const PORT = process.env.PORT || 7777
 const cors = require('cors')
 const cookieparser = require("cookie-parser")
 const http = require('http')
@@ -11,11 +11,14 @@ const { initializeSocket } = require("./utils/socket")
 const morgan = require('morgan')
 
 
+// 2. CHANGE: Update CORS for Production
 app.use(
     cors({
-        origin: 'http://localhost:5173',
+        // Allow BOTH your local frontend AND your future deployed frontend
+        // For now, using "*" (all) allows you to test easily. 
+        // Once your frontend is on Vercel, change "*" to "https://your-frontend.vercel.app"
+        origin: "*",
         methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
-        // allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
         optionsSuccessStatus: 200
     })
@@ -49,8 +52,9 @@ initializeSocket(server)
 connectDB()
     .then(() => {
         console.log("Database Connection Established Successfully!")
-        server.listen(PORT, () => {
-            console.log(`Server Started at 🚀 http://localhost:${PORT} `)
+        // 3. CHANGE: Listen on 0.0.0.0 is often safer for cloud containers
+        server.listen(PORT, "0.0.0.0", () => {
+            console.log(`Server Started at port ${PORT}`)
         })
     })
     .catch(() => {
