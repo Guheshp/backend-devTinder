@@ -11,40 +11,22 @@ const { initializeSocket } = require("./utils/socket")
 const morgan = require('morgan')
 
 
-
-app.use((req, res, next) => {
-    console.log("---- INCOMING REQUEST ----");
-    console.log("Method:", req.method);
-    console.log("Origin:", req.headers.origin);
-    console.log("URL:", req.originalUrl);
-    next();
-});
-
-
-
 // 2. CHANGE: Update CORS for Production
 
 app.use(
     cors({
         origin: (origin, callback) => {
-            // allow Postman / mobile apps
             if (!origin) return callback(null, true);
 
-            // allow local dev
-            if (
-                origin === "http://localhost:3000" ||
-                origin === "http://localhost:7777"
-            ) {
-                return callback(null, true);
-            }
-
-            // allow production vercel domain
             if (origin === "https://client-dev-tinder-sekh.vercel.app") {
                 return callback(null, true);
             }
 
-            // allow ALL vercel preview deployments
             if (/^https:\/\/client-dev-tinder-sekh-.*\.vercel\.app$/.test(origin)) {
+                return callback(null, true);
+            }
+
+            if (origin.startsWith("http://localhost")) {
                 return callback(null, true);
             }
 
@@ -55,30 +37,14 @@ app.use(
 );
 
 
+
 app.use((req, res, next) => {
-    res.on("finish", () => {
-        console.log("---- RESPONSE HEADERS ----");
-        console.log("Access-Control-Allow-Origin:", res.getHeader("Access-Control-Allow-Origin"));
-        console.log("Access-Control-Allow-Credentials:", res.getHeader("Access-Control-Allow-Credentials"));
-    });
+    console.log("---- INCOMING REQUEST ----");
+    console.log("Method:", req.method);
+    console.log("Origin:", req.headers.origin);
+    console.log("URL:", req.originalUrl);
     next();
 });
-
-app.options("*", (req, res) => {
-    console.log("🟡 OPTIONS PREFLIGHT HIT");
-    res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader(
-        "Access-Control-Allow-Methods",
-        "GET,POST,PUT,PATCH,DELETE,OPTIONS"
-    );
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type, Authorization"
-    );
-    return res.sendStatus(204);
-});
-
 
 
 app.use(express.json())
