@@ -14,13 +14,12 @@ const morgan = require('morgan')
 // 2. CHANGE: Update CORS for Production
 app.use(
     cors({
-        // Allow BOTH your local frontend AND your future deployed frontend
-        // For now, using "*" (all) allows you to test easily. 
-        // Once your frontend is on Vercel, change "*" to "https://your-frontend.vercel.app"
-        origin: "https://client-dev-tinder-sekh.vercel.app",
-        methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
-        credentials: true,
-        optionsSuccessStatus: 200
+        origin: [
+            "http://localhost:7777",                 // Allows your local React app
+            "https://client-dev-tinder-sekh.vercel.app" // Allows your Live Vercel app
+        ],
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+        credentials: true, // This is CRITICAL for cookies
     })
 );
 app.use(express.json())
