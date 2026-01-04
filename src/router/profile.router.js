@@ -125,7 +125,7 @@ router.get("/getbyemailId", async (req, res) => {
     }
 })
 
-router.get("/feed", async (req, res) => {
+router.get("/feed", userAuth, async (req, res) => {
     try {
         const allUsers = await User.find()
 
