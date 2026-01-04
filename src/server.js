@@ -23,35 +23,37 @@ app.use((req, res, next) => {
 
 
 // 2. CHANGE: Update CORS for Production
-const allowedOrigins = [
-    "http://localhost:7777",
-    "http://localhost:3000",
-    "https://client-dev-tinder-sekh.vercel.app",
-];
 
 app.use(
     cors({
-        origin: function (origin, callback) {
-            console.log("🔵 CORS CHECK ORIGIN:", origin);
+        origin: (origin, callback) => {
+            // allow Postman / mobile apps
+            if (!origin) return callback(null, true);
 
-            if (!origin) {
-                console.log("🟢 NO ORIGIN → ALLOWED");
+            // allow local dev
+            if (
+                origin === "http://localhost:3000" ||
+                origin === "http://localhost:7777"
+            ) {
                 return callback(null, true);
             }
 
-            if (allowedOrigins.includes(origin)) {
-                console.log("🟢 ORIGIN ALLOWED");
+            // allow production vercel domain
+            if (origin === "https://client-dev-tinder-sekh.vercel.app") {
                 return callback(null, true);
             }
 
-            console.log("🔴 ORIGIN BLOCKED");
-            return callback(null, false); // IMPORTANT
+            // allow ALL vercel preview deployments
+            if (/^https:\/\/client-dev-tinder-sekh-.*\.vercel\.app$/.test(origin)) {
+                return callback(null, true);
+            }
+
+            return callback(null, false);
         },
         credentials: true,
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
+
 
 app.use((req, res, next) => {
     res.on("finish", () => {
