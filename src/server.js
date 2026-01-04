@@ -17,7 +17,7 @@ app.use(
         // Allow BOTH your local frontend AND your future deployed frontend
         // For now, using "*" (all) allows you to test easily. 
         // Once your frontend is on Vercel, change "*" to "https://your-frontend.vercel.app"
-        origin: "*",
+        origin: "https://client-dev-tinder-sekh.vercel.app",
         methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
         credentials: true,
         optionsSuccessStatus: 200
