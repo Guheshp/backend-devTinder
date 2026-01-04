@@ -53,7 +53,7 @@ router.post('/create', userAuth, async (req, res) => {
 router.post('/webhook', async (req, res) => {
 
     try {
-        const webhookSignature = req.headers['x-razorpay-signature'];
+        const webhookSignature = req.get('x-razorpay-signature');
         const isWebHookValid = validateWebhookSignature(JSON.stringify(req.body), webhookSignature, process.env.Razorpay_Webhook_Secret);
 
 
@@ -73,11 +73,12 @@ router.post('/webhook', async (req, res) => {
         await paymentRecord.save();
 
         const userId = paymentRecord.userId;
+        console.log("userId", userId);
         const User = await User.findById(userId);
         User.isPremium = true;
         User.memberShipType = paymentRecord.notes.memberShipType;
         await User.save();
-
+        console.log("User", User);
         if (req.body.event === 'payment.captured') {
             console.log("Payment captured successfully for order:", paymentDetails.order_id);
         }
