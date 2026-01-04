@@ -6,7 +6,6 @@ const Payment = require('../model/payment');
 const { memberAmount } = require('../utils/constants');
 const { validateWebhookSignature } = require('razorpay/dist/utils/razorpay-utils');
 const User = require('../model/user');
-const { use } = require('react');
 
 router.post('/create', userAuth, async (req, res) => {
     console.log("Payment request received");
