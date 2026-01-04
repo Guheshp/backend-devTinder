@@ -1,4 +1,8 @@
-node_modules
-.early.coverage
+# Dependencies
+node_modules/
 
+# Environment variables (Sensitive Data)
 .env
+
+# Testing coverage (Optional based on your snippet)
+.early.coverage
