@@ -11,6 +11,17 @@ const { initializeSocket } = require("./utils/socket")
 const morgan = require('morgan')
 
 
+
+app.use((req, res, next) => {
+    console.log("---- INCOMING REQUEST ----");
+    console.log("Method:", req.method);
+    console.log("Origin:", req.headers.origin);
+    console.log("URL:", req.originalUrl);
+    next();
+});
+
+
+
 // 2. CHANGE: Update CORS for Production
 const allowedOrigins = [
     "http://localhost:7777",
@@ -21,21 +32,52 @@ const allowedOrigins = [
 app.use(
     cors({
         origin: function (origin, callback) {
-            // Allow Postman / mobile apps / server-to-server
-            if (!origin) return callback(null, true);
+            console.log("🔵 CORS CHECK ORIGIN:", origin);
 
-            if (allowedOrigins.includes(origin)) {
+            if (!origin) {
+                console.log("🟢 NO ORIGIN → ALLOWED");
                 return callback(null, true);
             }
 
-            // IMPORTANT: do NOT throw error
-            return callback(null, false);
+            if (allowedOrigins.includes(origin)) {
+                console.log("🟢 ORIGIN ALLOWED");
+                return callback(null, true);
+            }
+
+            console.log("🔴 ORIGIN BLOCKED");
+            return callback(null, false); // IMPORTANT
         },
         credentials: true,
         methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
+
+app.use((req, res, next) => {
+    res.on("finish", () => {
+        console.log("---- RESPONSE HEADERS ----");
+        console.log("Access-Control-Allow-Origin:", res.getHeader("Access-Control-Allow-Origin"));
+        console.log("Access-Control-Allow-Credentials:", res.getHeader("Access-Control-Allow-Credentials"));
+    });
+    next();
+});
+
+app.options("*", (req, res) => {
+    console.log("🟡 OPTIONS PREFLIGHT HIT");
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    );
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization"
+    );
+    return res.sendStatus(204);
+});
+
+
 
 app.use(express.json())
 app.use(cookieparser())
