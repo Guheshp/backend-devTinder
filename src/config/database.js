@@ -1,7 +1,10 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
 const connectDB = async () => {
-    // await mongoose.connect("mongodb+srv://Guheshpanjagall:Xuz7G3jJrzXeKuzi@devtinder.6kstj.mongodb.net/DevTinder")
-    await mongoose.connect("mongodb://localhost:27017/DevTinder")
-}
-module.exports = { connectDB }
+    // This reads the variable you set in step 1
+    const connectionString = process.env.DB_CONNECTION_STRING;
+
+    await mongoose.connect(connectionString);
+};
+
+module.exports = { connectDB };

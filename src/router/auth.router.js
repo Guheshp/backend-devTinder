@@ -172,7 +172,7 @@ function generateAccessToken(user) {
             _id: user._id,
             email: user.emailId
         },
-        "BNIVoltas@215",
+        process.env.JWT_SECRET,
         { expiresIn: "1d" }
     )
 }
