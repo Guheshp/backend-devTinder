@@ -98,7 +98,22 @@ router.post('/webhook', async (req, res) => {
 })
 
 
-
+router.post('/premium/verify', userAuth, async (req, res) => {
+    const user = req.user;
+    if (user.isPremium) {
+        return res.status(200).json({
+            success: true,
+            isPremium: true,
+            memberShipType: user.memberShipType,
+            user: user
+        });
+    }
+    return res.status(200).json({
+        success: true,
+        isPremium: false,
+        user: user
+    });
+});
 
 
 module.exports = router;
