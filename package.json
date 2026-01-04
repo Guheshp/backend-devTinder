@@ -17,8 +17,11 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.6.3",
+    "morgan": "^1.10.1",
+    "node-cron": "^4.2.1",
     "nodemailer": "^7.0.12",
     "nodemon": "^3.1.6",
+    "razorpay": "^2.9.6",
     "socket.io": "^4.8.3",
     "validator": "^13.12.0"
   }

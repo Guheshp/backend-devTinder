@@ -129,7 +129,15 @@ const userSchema = new mongoose.Schema(
             enum: [1, -1],
             default: 1,
             index: true
-        }
+        },
+        isPremium: {
+            type: Boolean,
+            default: false
+        },
+        memberShipType: {
+            type: String,
+            default: null
+        },
     },
     { timestamps: true }
 )
