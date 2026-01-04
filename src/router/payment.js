@@ -6,6 +6,7 @@ const Payment = require('../model/payment');
 const { memberAmount } = require('../utils/constants');
 const { validateWebhookSignature } = require('razorpay/dist/utils/razorpay-utils');
 const User = require('../model/user');
+const User = require('../model/user');
 
 router.post('/create', userAuth, async (req, res) => {
     console.log("Payment request received");
@@ -74,11 +75,11 @@ router.post('/webhook', async (req, res) => {
 
         const userId = paymentRecord.userId;
         console.log("userId", userId);
-        const User = await User.findById(userId);
-        User.isPremium = true;
-        User.memberShipType = paymentRecord.notes.memberShipType;
-        await User.save();
-        console.log("User", User);
+        const UserData = await User.findById(userId);
+        UserData.isPremium = true;
+        UserData.memberShipType = paymentRecord.notes.memberShipType;
+        await UserData.save();
+        console.log("User", UserData);
         if (req.body.event === 'payment.captured') {
             console.log("Payment captured successfully for order:", paymentDetails.order_id);
         }
