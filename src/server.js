@@ -12,28 +12,31 @@ const morgan = require('morgan')
 
 
 // 2. CHANGE: Update CORS for Production
+const allowedOrigins = [
+    "http://localhost:7777",
+    "http://localhost:3000",
+    "https://client-dev-tinder-sekh.vercel.app",
+];
+
 app.use(
     cors({
-        origin: (origin, callback) => {
-            const allowedOrigins = [
-                "http://localhost:7777",                // Vite Frontend (Local)
-                "http://localhost:3000",                // React (Standard Port)
-                "https://client-dev-tinder-sekh.vercel.app" // Your Vercel Domain
-            ];
-
-            // Allow requests with no origin (like mobile apps or Postman)
+        origin: function (origin, callback) {
+            // Allow Postman / mobile apps / server-to-server
             if (!origin) return callback(null, true);
 
             if (allowedOrigins.includes(origin)) {
-                callback(null, true); // Allow the request
-            } else {
-                callback(new Error("Not allowed by CORS")); // Block it
+                return callback(null, true);
             }
+
+            // IMPORTANT: do NOT throw error
+            return callback(null, false);
         },
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-        credentials: true, // Allow cookies
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
+
 app.use(express.json())
 app.use(cookieparser())
 

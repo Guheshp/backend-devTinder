@@ -52,7 +52,12 @@ router.post("/signup", async (req, res) => {
         await userData.save()
 
         const token = generateAccessToken(userData)
-        res.cookie("token", token, { httpOnly: true })
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,     // REQUIRED for HTTPS (Vercel + Render)
+            sameSite: "none", // REQUIRED for cross-origin cookies
+        });
+
 
         // optional email
         await sendMail({
