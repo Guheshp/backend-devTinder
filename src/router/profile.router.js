@@ -5,7 +5,6 @@ const { userAuth } = require("../middleware/authmiddleware")
 const { validateEditProfileData } = require("../validator/signup.validator")
 const calculateProfileStrength = require("../utils/profileStrength")
 
-
 router.get("/profile/view", userAuth, async (req, res) => {
 
     const user = req.user;
@@ -18,16 +17,17 @@ router.get("/profile/view", userAuth, async (req, res) => {
 
 router.post("/profile/edit", userAuth, async (req, res) => {
     try {
+        // 1. Validate Input
         if (!validateEditProfileData(req)) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid edit request"
-            })
+                message: "Invalid edit request: Unknown fields or invalid location format"
+            });
         }
 
-        const loggedInUser = req.user
+        const loggedInUser = req.user;
 
-        /* ---------- Simple fields ---------- */
+        // 2. Update Simple Fields
         const simpleFields = [
             "firstName",
             "lastName",
@@ -36,59 +36,69 @@ router.post("/profile/edit", userAuth, async (req, res) => {
             "photo",
             "bio",
             "experienceLevel",
-            "skills"
-        ]
+            "skills",
+            "githubUrl",
+            "linkedinUrl",
+            "twitterUrl",
+            "portfolioUrl"
+        ];
 
         simpleFields.forEach((field) => {
+            // Check if the field exists in the request body
             if (req.body[field] !== undefined) {
-                loggedInUser[field] = req.body[field]
+
+                // 🛑 FIX: Explicitly handle removal
+                // If the user sends an empty string "" or null, we set it to undefined.
+                // In Mongoose, setting a field to 'undefined' removes it from the document.
+                if (req.body[field] === "" || req.body[field] === null) {
+                    loggedInUser[field] = undefined;
+                } else {
+                    loggedInUser[field] = req.body[field];
+                }
             }
-        })
+        });
 
-        loggedInUser.location = {
-            state: req.body.location.state,
-            country: req.body.location.country || "India"
+        // 3. Handle Photo Removal explicitly (Existing logic, kept safe)
+        if (req.body.photo === null || req.body.photo === "") {
+            loggedInUser.photo = undefined;
         }
 
-        // ✅ HANDLE PHOTO REMOVAL
-        if (req.body.photo === null) {
-            loggedInUser.photo = undefined // resets to default avatar
-        }
-
-        /* ---------- NESTED location (IMPORTANT FIX) ---------- */
+        // 4. Handle Nested Location (Existing logic)
         if (req.body.location) {
             loggedInUser.location = {
                 state: req.body.location.state || loggedInUser.location?.state || '',
-                country: req.body.location.country || 'India'
-            }
+                country: req.body.location.country || loggedInUser.location?.country || "India"
+            };
         }
 
-        const result = calculateProfileStrength(loggedInUser)
+        // 5. Recalculate Profile Score
+        const result = calculateProfileStrength(loggedInUser);
+        loggedInUser.profileCompletion = result.score;
+        loggedInUser.isProfileComplete = result.isComplete;
 
-        loggedInUser.profileCompletion = result.score
-        loggedInUser.isProfileComplete = result.isComplete
+        // 6. Save and Respond
+        await loggedInUser.save();
 
-        await loggedInUser.save()
-
-        const userResponse = loggedInUser.toObject()
-        delete userResponse.password
-        delete userResponse.loginAttempts
-        delete userResponse.lockUntil
+        const userResponse = loggedInUser.toObject();
+        delete userResponse.password;
+        delete userResponse.loginAttempts;
+        delete userResponse.lockUntil;
 
         res.status(200).json({
             success: true,
             message: "Profile updated successfully",
             data: userResponse
-        })
+        });
+
     } catch (error) {
-        console.error("Profile edit error:", error)
+        console.error("Profile edit error:", error);
         res.status(500).json({
             success: false,
             message: "Error while editing profile",
             error: error.message
-        })
+        });
     }
-})
+});
 
 router.get("/getbyemailId", async (req, res) => {
     const userEmail = req.body.emailId
@@ -125,7 +135,7 @@ router.get("/getbyemailId", async (req, res) => {
     }
 })
 
-router.get("/feed", userAuth, async (req, res) => {
+router.get("/dummyfeed", userAuth, async (req, res) => {
     try {
         const allUsers = await User.find()
 
@@ -162,9 +172,5 @@ router.delete("/deleteuser", async (req, res) => {
         })
     }
 })
-
-
-
-
 
 module.exports = router

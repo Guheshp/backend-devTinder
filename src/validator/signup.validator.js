@@ -53,8 +53,8 @@ const validateSignUpData = (req) => {
             throw new Error("Skills must be an array.");
         } else if (!skills.every(skill => typeof skill === "string")) {
             throw new Error("Each skill must be a string.");
-        } else if (skills.length > 10) {
-            throw new Error("Skill should not exceed 10.");
+        } else if (skills.length > 25) {
+            throw new Error("Skill should not exceed 25.");
         }
     }
 };
@@ -69,33 +69,41 @@ const validateEditProfileData = (req) => {
         "bio",
         "experienceLevel",
         "skills",
-        "location"
-    ]
+        "location",
+        "githubUrl",
+        "linkedinUrl",
+        "twitterUrl",
+        "portfolioUrl"
+    ];
 
-    const requestFields = Object.keys(req.body)
+    const requestFields = Object.keys(req.body);
 
-    // ❌ reject unknown fields
-    const isValid = requestFields.every(field =>
+    // 1. Check for unknown fields
+    const isFieldsValid = requestFields.every(field =>
         allowedFields.includes(field)
-    )
+    );
 
-    if (!isValid) {
-        console.error("Invalid fields:", requestFields)
+    if (!isFieldsValid) {
+        console.error("Invalid fields detected in request:", requestFields.filter(f => !allowedFields.includes(f)));
+        return false; // 🛑 FIXED: Now actually returns false if invalid fields are found
     }
 
-    // 🔍 extra validation for nested location
+    // 2. Validate nested location object if it exists
     if (req.body.location) {
-        if (
-            typeof req.body.location !== "object" ||
-            !req.body.location.state ||
-            !req.body.location.country
-        ) {
-            return false
+        // Ensure location is an object
+        if (typeof req.body.location !== "object") return false;
+
+        // Ensure state and country are strings if provided (not empty checks, just type checks)
+        // This allows partial updates if your schema allows it, or strict checks if required.
+        // Based on your route logic, you require 'state' and 'country'.
+        if (!req.body.location.state || !req.body.location.country) {
+            console.error("Location missing state or country");
+            return false;
         }
     }
 
-    return true
-}
+    return true;
+};
 
 module.exports = {
     validateSignUpData,

@@ -35,9 +35,7 @@ router.get('/chat/unread-count', userAuth, async (req, res) => {
     }
 })
 
-/* =====================================================
-   CHAT LIST (STATIC — MUST BE FIRST)
-===================================================== */
+
 router.get('/chat/list', userAuth, async (req, res) => {
     try {
         const userId = req.user._id
@@ -84,10 +82,6 @@ router.get('/chat/list', userAuth, async (req, res) => {
     }
 })
 
-
-/* =====================================================
-   CHAT BY USER ID (DYNAMIC — MUST BE LAST)
-===================================================== */
 router.get('/chat/:targetUserId', userAuth, async (req, res) => {
     const { targetUserId } = req.params
     const userId = req.user._id
@@ -132,8 +126,5 @@ router.get('/chat/:targetUserId', userAuth, async (req, res) => {
 
     res.json({ success: true, chat })
 })
-
-
-
 
 module.exports = router

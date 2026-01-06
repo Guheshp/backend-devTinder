@@ -9,9 +9,6 @@ const { validateSignUpData } = require("../validator/signup.validator")
 const { sendMail } = require("../utils/mailer")
 const { userAuth } = require('../middleware/authmiddleware')
 
-/* =====================================================
-   SIGNUP
-===================================================== */
 router.post("/signup", async (req, res) => {
     try {
         validateSignUpData(req)
@@ -81,9 +78,6 @@ router.post("/signup", async (req, res) => {
     }
 })
 
-/* =====================================================
-   LOGIN
-===================================================== */
 router.post("/login", async (req, res) => {
     try {
         const { emailId, password } = req.body
@@ -121,56 +115,12 @@ router.post("/login", async (req, res) => {
     }
 })
 
-/* =====================================================
-   LOGOUT
-===================================================== */
 router.post("/logout", (req, res) => {
     res.cookie("token", "", { expires: new Date(0) })
     res.json({ success: true, message: "Logged out" })
 })
 
-// /* =====================================================
-//    ⚠️ USER BY ID — MUST BE LAST & VALIDATED
-// ===================================================== */
-// router.get("/user/:id", userAuth, async (req, res) => {
-//     try {
-//         const { id } = req.params
 
-//         // ✅ CRITICAL FIX
-//         if (!mongoose.Types.ObjectId.isValid(id)) {
-//             return res.status(400).json({
-//                 success: false,
-//                 message: "Invalid user id"
-//             })
-//         }
-
-//         const user = await User.findById(id)
-//             .select("firstName lastName photo")
-
-//         if (!user) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "User not found"
-//             })
-//         }
-
-//         res.json({
-//             success: true,
-//             data: user
-//         })
-
-//     } catch (error) {
-//         console.error("Fetch user error:", error)
-//         res.status(500).json({
-//             success: false,
-//             message: "Server error"
-//         })
-//     }
-// })
-
-/* =====================================================
-   JWT HELPER
-===================================================== */
 function generateAccessToken(user) {
     return jwt.sign(
         {

@@ -110,12 +110,22 @@ router.get('/user/is-connected/:targetUserId', userAuth, async (req, res) => {
         const loggedInUserId = req.user._id
         const { targetUserId } = req.params
 
+        // 1. Check if the user is Premium
+        // If true, we return isConnected: true immediately
+        if (req.user.isPremium) {
+            return res.json({
+                success: true,
+                isConnected: true
+            })
+        }
+
+        // 2. If NOT Premium, check for an existing connection
         const connection = await ConnectionRequestModel.findOne({
             $or: [
                 {
                     fromUserId: loggedInUserId,
                     toUserId: targetUserId,
-                    status: 'accepeted'
+                    status: 'accepeted' // Note: Kept your spelling 'accepeted'
                 },
                 {
                     fromUserId: targetUserId,

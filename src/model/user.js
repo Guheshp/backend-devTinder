@@ -100,8 +100,43 @@ const userSchema = new mongoose.Schema(
         skills: {
             type: [String],
             validate: {
-                validator: (value) => value.length <= 10,
-                message: "Maximum 10 skills allowed"
+                validator: (value) => value.length <= 25,
+                message: "Maximum 25 skills allowed"
+            }
+        },
+
+        /* ---------- Social Links (Added) ---------- */
+        githubUrl: {
+            type: String,
+            trim: true,
+            validate: {
+                // Allows empty/null, but if provided, must be a URL
+                validator: (value) => !value || validator.isURL(value),
+                message: "Invalid GitHub URL"
+            }
+        },
+        linkedinUrl: {
+            type: String,
+            trim: true,
+            validate: {
+                validator: (value) => !value || validator.isURL(value),
+                message: "Invalid LinkedIn URL"
+            }
+        },
+        twitterUrl: {
+            type: String,
+            trim: true,
+            validate: {
+                validator: (value) => !value || validator.isURL(value),
+                message: "Invalid Twitter URL"
+            }
+        },
+        portfolioUrl: {
+            type: String,
+            trim: true,
+            validate: {
+                validator: (value) => !value || validator.isURL(value),
+                message: "Invalid Portfolio URL"
             }
         },
 
