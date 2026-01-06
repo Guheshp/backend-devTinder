@@ -62,6 +62,7 @@ const requestRouter = require("./router/request.router")
 const userRouter = require("./router/user.router")
 const chatRouter = require("./router/chat.router")
 const paymentRouter = require("./router/payment")
+const geminiRouter = require("./router/gemini")
 
 app.use("/", authRouter)
 app.use("/", profileRouter)
@@ -69,6 +70,8 @@ app.use("/", requestRouter)
 app.use("/user", userRouter)
 app.use("/", chatRouter)
 app.use("/payment", paymentRouter)
+app.use("/gemini", geminiRouter)
+
 
 const server = http.createServer(app)
 initializeSocket(server)

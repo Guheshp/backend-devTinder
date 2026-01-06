@@ -2,14 +2,15 @@
   "name": "dev_tinder",
   "version": "1.0.0",
   "description": "devtinder application where developer meets 🚀",
- "main": "src/server.js",
- "scripts": {
-  "start": "node src/server.js", 
-  "dev": "nodemon src/server.js"
-},
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
