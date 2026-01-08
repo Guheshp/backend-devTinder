@@ -57,11 +57,11 @@ router.post("/signup", async (req, res) => {
 
 
         // optional email
-        await sendMail({
-            to: userData.emailId,
-            subject: "Welcome to DevTinder!",
-            html: `<h2>Hello ${userData.firstName}</h2><p>Welcome to DevTinder 🚀</p>`
-        })
+        // await sendMail({
+        //     to: userData.emailId,
+        //     subject: "Welcome to DevTinder!",
+        //     html: `<h2>Hello ${userData.firstName}</h2><p>Welcome to DevTinder 🚀</p>`
+        // })
 
         res.status(201).json({
             success: true,
