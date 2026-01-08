@@ -3,7 +3,7 @@ const router = express.Router()
 const User = require("../model/user")
 const { userAuth } = require("../middleware/authmiddleware")
 const { validateEditProfileData } = require("../validator/signup.validator")
-const calculateProfileStrength = require("../utils/profileStrength")
+const { calculateProfileStrength } = require("../utils/profileStrength")
 
 router.get("/profile/view", userAuth, async (req, res) => {
 
@@ -71,7 +71,7 @@ router.post("/profile/edit", userAuth, async (req, res) => {
             };
         }
 
-        // 5. Recalculate Profile Score
+        // 5. Recalculate Profile Score (THIS NOW USES THE NEW LOGIC)
         const result = calculateProfileStrength(loggedInUser);
         loggedInUser.profileCompletion = result.score;
         loggedInUser.isProfileComplete = result.isComplete;

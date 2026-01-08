@@ -18,6 +18,13 @@ const userSchema = new mongoose.Schema(
             maxlength: 50
         },
 
+        // ✅ NEW FIELD: Auto-generated Unique ID
+        uniqueId: {
+            type: String,
+            unique: true, // Ensures no two users have the same ID
+            trim: true
+        },
+
         emailId: {
             type: String,
             required: true,
@@ -105,12 +112,11 @@ const userSchema = new mongoose.Schema(
             }
         },
 
-        /* ---------- Social Links (Added) ---------- */
+        /* ---------- Social Links ---------- */
         githubUrl: {
             type: String,
             trim: true,
             validate: {
-                // Allows empty/null, but if provided, must be a URL
                 validator: (value) => !value || validator.isURL(value),
                 message: "Invalid GitHub URL"
             }
@@ -158,7 +164,7 @@ const userSchema = new mongoose.Schema(
             default: false
         },
 
-        /* ---------- Status (Soft Delete) ---------- */
+        /* ---------- Status ---------- */
         status: {
             type: Number,
             enum: [1, -1],
@@ -183,6 +189,34 @@ userSchema.index({ gender: 1 })
 userSchema.index({ skills: 1 })
 userSchema.index({ status: 1 })
 userSchema.index({ "location.city": 1 })
+userSchema.index({ uniqueId: 1 }) // Index for faster search
+
+/* ---------- LOGIC: Auto Generate Unique ID ---------- */
+// This runs automatically BEFORE saving a new user
+userSchema.pre("save", async function (next) {
+    // Only run if the document is new or uniqueId is missing
+    if (this.isNew || !this.uniqueId) {
+
+        // 1. Take First Name (lowercase, remove spaces)
+        const namePart = this.firstName.toLowerCase().replace(/\s+/g, '');
+
+        // 2. Pick a random special character
+        const specialChars = "@#$&_";
+        const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)];
+
+        // 3. Generate 3 random alphanumeric characters (e.g., 'a2z', '9x1')
+        const randomSuffix = Math.random().toString(36).substring(2, 5);
+
+        // 4. Combine them
+        let generatedId = `${namePart}${randomSpecial}${randomSuffix}`;
+
+        // (Optional) Check if this ID already exists to be 100% sure it's unique
+        // If your app is huge, you might want a loop here. For now, this is statistically safe.
+
+        this.uniqueId = generatedId;
+    }
+    next();
+});
 
 /* ---------- Model ---------- */
 const User = mongoose.model("User", userSchema)

@@ -1,47 +1,37 @@
-// src/find-models.js
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 
-const API_KEY = process.env.GEMINI_API_KEY;
-
-if (!API_KEY) {
-    console.error("❌ No API Key found in .env file!");
-    process.exit(1);
-}
-
-console.log("🔍 Querying Google API for available models...");
-
-// We use native fetch to bypass SDK version issues
-async function listModels() {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`;
-
+async function testAI() {
     try {
-        const response = await fetch(url);
-        const data = await response.json();
+        console.log("1. Initializing AI...");
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-        if (data.error) {
-            console.error("\n❌ API Error:", data.error.message);
-            console.log("👉 This usually means the API Key is invalid or the 'Generative Language API' is not enabled in Google Cloud Console.");
+        // Let's try to list models using the SDK to see what we have
+        // (Note: Not all SDK versions expose listModels, so we wrap in try/catch)
+        try {
+            console.log("2. Checking available models...");
+            // This is a common way to test connectivity
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const result = await model.generateContent("Test connection");
+            console.log("✅ SUCCESS! Response:", result.response.text());
             return;
+        } catch (e) {
+            console.warn("⚠️ gemini-1.5-flash failed. Error:", e.message);
         }
 
-        console.log("\n✅ SUCCESS! Here are the models your key can access:\n");
-
-        // Filter for models that support "generateContent"
-        const contentModels = data.models.filter(m => m.supportedGenerationMethods.includes("generateContent"));
-
-        contentModels.forEach(model => {
-            console.log(`Model Name: ${model.name}`); // This is the EXACT string you need to copy
-            console.log(`Description: ${model.displayName}`);
-            console.log("------------------------------------------------");
-        });
-
-        if (contentModels.length === 0) {
-            console.log("⚠️ No content generation models found. You might only have access to embedding models.");
-        }
+        // FALLBACK: Try the older reliable model if flash fails
+        console.log("3. Trying fallback model (gemini-pro)...");
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent("Test connection");
+        console.log("✅ SUCCESS with Fallback! Response:", result.response.text());
 
     } catch (error) {
-        console.error("Network Error:", error.message);
+        console.error("❌ FATAL ERROR:", error.message);
+        console.log("\n--- TROUBLESHOOTING ---");
+        console.log("1. Run: npm list @google/generative-ai");
+        console.log("   (It must be 0.12.0 or higher)");
+        console.log("2. Create a new API Key at https://aistudio.google.com/");
     }
 }
 
-listModels();
+testAI();
