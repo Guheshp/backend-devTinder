@@ -18,7 +18,7 @@ app.use(
         origin: (origin, callback) => {
             if (!origin) return callback(null, true);
 
-            if (origin === "https://client-dev-tinder-sekh.vercel.app") {
+            if (origin === "https://client-dev-tinder-smpb.vercel.app") {
                 return callback(null, true);
             }
 
