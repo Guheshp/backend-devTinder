@@ -11,9 +11,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-console.log("📧 Mailer Configured with User:", process.env.EMAIL_USER)
-console.log("📧 Mailer Configured with Pass:", process.env.EMAIL_PASS);
-
 /**
  * Sends an email using predefined transporter
  * @param {Object} options - Email options
