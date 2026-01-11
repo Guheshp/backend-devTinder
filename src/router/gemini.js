@@ -5,8 +5,14 @@ const { userAuth } = require("../middleware/authmiddleware");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+const { tokenBucketLimiter } = require("../middleware/rateLimiter");
 
-router.post("/suggest-courses", userAuth, async (req, res) => {
+// Configuration:
+// Capacity = 5 (User can do 5 rapid searches)
+// RefillRate = 0.1 (User gets 1 new token every 10 seconds)
+const aiRateLimiter = tokenBucketLimiter(5, 0.1);
+
+router.post("/suggest-courses", userAuth, aiRateLimiter, async (req, res) => {
     try {
         const user = req.user;
         const userSkills = user.skills || [];

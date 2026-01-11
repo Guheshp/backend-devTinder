@@ -10,8 +10,6 @@ const { sendMail } = require("../utils/mailer")
 const { userAuth } = require('../middleware/authmiddleware')
 const crypto = require("crypto");
 
-
-
 function generateAccessToken(user) {
     return jwt.sign(
         {
@@ -103,7 +101,6 @@ router.post("/signup", async (req, res) => {
     }
 });
 
-
 router.post("/login", async (req, res) => {
     try {
         const { emailId, password } = req.body
@@ -145,7 +142,6 @@ router.post("/logout", (req, res) => {
     res.cookie("token", "", { expires: new Date(0) })
     res.json({ success: true, message: "Logged out" })
 })
-
 
 router.post("/forgot-password", async (req, res) => {
     try {
@@ -235,6 +231,5 @@ router.post("/reset-password/:token", async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
-
 
 module.exports = router
