@@ -4,8 +4,8 @@
 
 This repository contains the **Node.js & Express.js** server-side logic, integrated with **MongoDB**, **Socket.io**, and **Generative AI**.
 
-🔗 **Live API:** [Insert Your Render/AWS Link Here]  
-🔗 **Frontend Repo:** [Link to Frontend Repo]
+🔗 **Live API: https://dev-tinder-backend-udyy.onrender.com  
+🔗 **Frontend Repo: https://github.com/Guheshp/client-devTinder
 
 ---
 
