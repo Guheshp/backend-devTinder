@@ -18,13 +18,13 @@ app.use(
         origin: (origin, callback) => {
             if (!origin) return callback(null, true);
 
-            if (origin === "https://client-dev-tinder-smpb.vercel.app") {
+            if (origin === "http://mypeg.in/") {
                 return callback(null, true);
             }
 
-            if (/^https:\/\/client-dev-tinder-sekh-.*\.vercel\.app$/.test(origin)) {
-                return callback(null, true);
-            }
+            // if (/^https:\/\/client-dev-tinder-sekh-.*\.vercel\.app$/.test(origin)) {
+            //     return callback(null, true);
+            // }
 
             if (origin.startsWith("http://localhost")) {
                 return callback(null, true);
