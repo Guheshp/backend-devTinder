@@ -17,26 +17,19 @@ app.use(
     cors({
         origin: (origin, callback) => {
             if (!origin) return callback(null, true);
-
-            if (origin === "http://mypeg.in/") {
+            // ❌ WAS: "http://mypeg.in/" (Browsers never send the slash)
+            // ✅ CHANGE TO:
+            if (origin === "http://mypeg.in" || origin === "http://www.mypeg.in") {
                 return callback(null, true);
             }
-
-            // if (/^https:\/\/client-dev-tinder-sekh-.*\.vercel\.app$/.test(origin)) {
-            //     return callback(null, true);
-            // }
-
             if (origin.startsWith("http://localhost")) {
                 return callback(null, true);
             }
-
             return callback(null, false);
         },
         credentials: true,
     })
 );
-
-
 
 app.use((req, res, next) => {
     console.log("---- INCOMING REQUEST ----");
@@ -64,13 +57,13 @@ const chatRouter = require("./router/chat.router")
 const paymentRouter = require("./router/payment")
 const geminiRouter = require("./router/gemini")
 
-app.use("/", authRouter)
-app.use("/", profileRouter)
-app.use("/", requestRouter)
-app.use("/user", userRouter)
-app.use("/", chatRouter)
-app.use("/payment", paymentRouter)
-app.use("/gemini", geminiRouter)
+app.use("/api", authRouter);      // Now it will be /api/login
+app.use("/api", profileRouter);   // /api/profile/view
+app.use("/api", requestRouter);   // /api/request/send
+app.use("/api/user", userRouter); // /api/user/feed
+app.use("/api", chatRouter);
+app.use("/api/payment", paymentRouter);
+app.use("/api/gemini", geminiRouter);
 
 
 const server = http.createServer(app)

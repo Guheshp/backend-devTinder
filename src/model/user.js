@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
         // ✅ NEW FIELD: Auto-generated Unique ID
         uniqueId: {
             type: String,
-            unique: true, // Ensures no two users have the same ID
+            unique: true, // This automatically creates the index!
             trim: true
         },
 
@@ -169,7 +169,7 @@ const userSchema = new mongoose.Schema(
             type: Number,
             enum: [1, -1],
             default: 1,
-            index: true
+            index: true // This creates the index automatically!
         },
         isPremium: {
             type: Boolean,
@@ -192,41 +192,26 @@ const userSchema = new mongoose.Schema(
 )
 
 /* ---------- Indexes ---------- */
+// REMOVED DUPLICATES: uniqueId and status are already indexed above.
 userSchema.index({ firstName: 1, lastName: 1 })
 userSchema.index({ gender: 1 })
 userSchema.index({ skills: 1 })
-userSchema.index({ status: 1 })
+// Note: location.city is not in your schema (only state/country), so this index might not be useful unless you add city.
 userSchema.index({ "location.city": 1 })
-userSchema.index({ uniqueId: 1 }) // Index for faster search
+
 
 /* ---------- LOGIC: Auto Generate Unique ID ---------- */
-// This runs automatically BEFORE saving a new user
 userSchema.pre("save", async function (next) {
-    // Only run if the document is new or uniqueId is missing
     if (this.isNew || !this.uniqueId) {
-
-        // 1. Take First Name (lowercase, remove spaces)
         const namePart = this.firstName.toLowerCase().replace(/\s+/g, '');
-
-        // 2. Pick a random special character
         const specialChars = "@#$&_";
         const randomSpecial = specialChars[Math.floor(Math.random() * specialChars.length)];
-
-        // 3. Generate 3 random alphanumeric characters (e.g., 'a2z', '9x1')
         const randomSuffix = Math.random().toString(36).substring(2, 5);
-
-        // 4. Combine them
         let generatedId = `${namePart}${randomSpecial}${randomSuffix}`;
-
-        // (Optional) Check if this ID already exists to be 100% sure it's unique
-        // If your app is huge, you might want a loop here. For now, this is statistically safe.
-
         this.uniqueId = generatedId;
     }
     next();
 });
 
-/* ---------- Model ---------- */
 const User = mongoose.model("User", userSchema)
-
 module.exports = User
