@@ -10,6 +10,17 @@ const { sendMail } = require("../utils/mailer")
 const { userAuth } = require('../middleware/authmiddleware')
 const crypto = require("crypto");
 
+
+
+const isProduction = process.env.NODE_ENV === "production";
+const cookieOptions = {
+    httpOnly: true,
+    // If you are on localhost, 'secure' should be false. 
+    // If on Prod (HTTPS), it should be true.
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+};
+
 function generateAccessToken(user) {
     return jwt.sign(
         {
@@ -25,59 +36,33 @@ router.post("/signup", async (req, res) => {
     try {
         validateSignUpData(req);
 
-        const {
-            firstName,
-            lastName,
-            emailId,
-            password,
-            age,
-            gender,
-            photo,
-            skills
-        } = req.body;
+        const { firstName, lastName, emailId, password, age, gender, photo, skills } = req.body;
 
         const existingUser = await User.findOne({ emailId });
         if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                message: "Email already exists",
-            });
+            return res.status(409).json({ success: false, message: "Email already exists" });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
 
         const userData = new User({
-            firstName,
-            lastName,
-            emailId,
-            password: passwordHash,
-            age,
-            gender,
-            photo,
-            skills,
+            firstName, lastName, emailId, password: passwordHash, age, gender, photo, skills,
         });
 
         await userData.save();
 
         const token = generateAccessToken(userData);
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        });
+        // 🔥 FIX: Use the shared cookieOptions
+        res.cookie("token", token, cookieOptions);
 
-        // 📧 Send welcome email (non-blocking)
+        // 📧 Send welcome email (Keep your existing logic)
         try {
             await sendMail({
                 to: userData.emailId,
                 subject: "Welcome to DevTinder!",
                 text: `Hello ${userData.firstName}, Welcome to DevTinder!`,
-                html: `
-                    <h2>Hello ${userData.firstName},</h2>
-                    <p>Welcome to <b>DevTinder</b> 🚀</p>
-                    <p>We’re excited to have you on board.</p>
-                `,
+                html: `<h2>Hello ${userData.firstName},</h2><p>Welcome to <b>DevTinder</b> 🚀</p>`,
             });
         } catch (emailError) {
             console.error("Email failed:", emailError.message);
@@ -94,49 +79,39 @@ router.post("/signup", async (req, res) => {
 
     } catch (error) {
         console.error("Signup error:", error);
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
 router.post("/login", async (req, res) => {
     try {
-        const { emailId, password } = req.body
+        const { emailId, password } = req.body;
 
-        const user = await User.findOne({ emailId })
+        const user = await User.findOne({ emailId });
         if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid credentials"
-            })
+            return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        const isValid = await bcrypt.compare(password, user.password)
+        const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid credentials"
-            })
+            return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        const token = generateAccessToken(user)
-        res.cookie("token", token, { httpOnly: true })
+        const token = generateAccessToken(user);
+
+        // 🔥 FIX: Use the SAME shared cookieOptions here too
+        res.cookie("token", token, cookieOptions);
 
         res.json({
             success: true,
             message: "Login successful",
-            data: user
-        })
+            data: user,
+        });
 
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        })
+        res.status(500).json({ success: false, message: error.message });
     }
-})
+});
 
 router.post("/logout", (req, res) => {
     res.cookie("token", "", { expires: new Date(0) })
