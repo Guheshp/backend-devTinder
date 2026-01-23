@@ -105,8 +105,8 @@ router.post("/feed", userAuth, async (req, res) => {
             status: 1,                      // Only active users
             isBlocked: false                // No blocked users
         })
-            .select(USER_SAFE_DATA)             // Only return safe fields
-            .sort({ isProfileComplete: -1, _id: 1 }) // SORT: Complete profiles first (-1), then by ID (1)
+            .select(USER_SAFE_DATA)
+            .sort({ isPremium: -1, isProfileComplete: -1, _id: 1 })
             .skip(skip)
             .limit(limit);
 
