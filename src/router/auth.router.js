@@ -15,10 +15,8 @@ const crypto = require("crypto");
 const isProduction = process.env.NODE_ENV === "production";
 const cookieOptions = {
     httpOnly: true,
-    // If you are on localhost, 'secure' should be false. 
-    // If on Prod (HTTPS), it should be true.
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
+    secure: false,       // Must be FALSE for HTTP (even in production)
+    sameSite: "lax",     // Must be "lax" because "none" requires secure: true
 };
 
 function generateAccessToken(user) {
