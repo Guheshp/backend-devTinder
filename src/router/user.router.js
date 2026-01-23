@@ -253,4 +253,111 @@ router.post("/search", userAuth, async (req, res) => {
     }
 });
 
+router.post("/request/ignored", userAuth, async (req, res) => {
+    try {
+        const loggedInUser = req.user;
+
+        // 1. Check if Premium (Optional - Uncomment if you want strict backend enforcement)
+        if (!loggedInUser.isPremium) {
+            return res.status(403).json({ message: "Access denied. Premium feature." });
+        }
+
+
+        // 2. Find all requests where YOU ignored someone
+        const ignoredRequests = await ConnectionRequestModel.find({
+            fromUserId: loggedInUser._id,
+            status: "ignored",
+        })
+            .populate(
+                "toUserId", // 👈 This is the FIELD in ConnectionRequest you want to expand
+                "firstName lastName photo age gender bio skills experienceLevel location githubUrl linkedinUrl twitterUrl portfolioUrl isPremium memberShipType emailId" // 👈 These are the fields from USER to select
+            )
+            .sort({ createdAt: -1 });
+
+        // 3. Extract just the user objects
+        const data = ignoredRequests.map((row) => row.toUserId);
+
+        res.json({
+            message: "Ignored users fetched successfully",
+            data: data,
+        });
+
+    } catch (err) {
+        res.status(500).json({ message: "ERROR: " + err.message });
+    }
+});
+
+
+
+
+router.post(
+    "/resend-request/send/:status/:toUserId",
+    userAuth,
+    async (req, res) => {
+        try {
+            const fromUserId = req.user._id;
+            const toUserId = req.params.toUserId;
+            const status = req.params.status;
+
+            // 1. Validate Status Type
+            const allowedStatus = ["ignored", "intrested"];
+            if (!allowedStatus.includes(status)) {
+                return res.status(400).json({
+                    message: "Invalid status type: " + status
+                });
+            }
+
+            // 2. Validate Target User ID
+            const toUser = await User.findById(toUserId);
+            if (!toUser) {
+                return res.status(404).json({
+                    message: "User not found!"
+                });
+            }
+
+            // 3. 🔥 DELETE EXISTING 'IGNORED' REQUEST FIRST
+            // This is the "Rewind" logic: Remove the old 'ignored' block before sending new interest.
+            const deletedRequest = await ConnectionRequestModel.findOneAndDelete({
+                fromUserId: fromUserId,
+                toUserId: toUserId,
+                status: "ignored",
+            });
+
+            // 4. Check for any remaining existing connection requests
+            // (e.g., if there is a reverse request from them to you, or if the delete failed/didn't exist)
+            const existingConnectionRequest = await ConnectionRequestModel.findOne({
+                $or: [
+                    { fromUserId, toUserId }, // Check if we already sent another request
+                    { fromUserId: toUserId, toUserId: fromUserId } // Check if THEY sent us one
+                ]
+            });
+
+            if (existingConnectionRequest) {
+                return res.status(400).json({
+                    message: "Connection Request already exists (or they already sent you one)!"
+                });
+            }
+
+            // 5. Create New Request
+            const connectionRequest = new ConnectionRequestModel({
+                fromUserId,
+                toUserId,
+                status
+            });
+
+            const data = await connectionRequest.save();
+
+            res.json({
+                message: `${req.user.firstName} is ${status} in ${toUser.firstName}`,
+                data: data
+            });
+
+        } catch (error) {
+            res.status(500).json({
+                message: "ERROR: " + error.message
+            });
+        }
+    }
+);
+
 module.exports = router
