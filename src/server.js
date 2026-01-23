@@ -17,8 +17,6 @@ app.use(
     cors({
         origin: (origin, callback) => {
             if (!origin) return callback(null, true);
-            // ❌ WAS: "http://mypeg.in/" (Browsers never send the slash)
-            // ✅ CHANGE TO:
             if (origin === "http://mypeg.in" || origin === "http://www.mypeg.in") {
                 return callback(null, true);
             }
@@ -27,6 +25,7 @@ app.use(
             }
             return callback(null, false);
         },
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // ✅ ADD THIS
         credentials: true,
     })
 );

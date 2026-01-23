@@ -116,6 +116,12 @@ const initializeSocket = (server) => {
                 }
             }
         })
+
+        socket.on('leaveChat', ({ userId, targetUserId }) => {
+            if (!userId || !targetUserId) return
+            const roomId = getRoomId(userId, targetUserId)
+            socket.leave(roomId) // ✅ Stops server from sending messages to this socket for this room
+        })
     })
 }
 
